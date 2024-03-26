@@ -47,7 +47,11 @@ app = Dash(__name__)
 server = app.server
 
 app.layout = html.Div([
-    html.H1(children='Uconsole Order Progress', style={'textAlign':'center'}),
+    html.H1(children='uConsole Order Progress', style={'textAlign':'center'}),
+    html.H3(
+        children=html.A("Link to Source forum", href='https://forum.clockworkpi.com/t/highest-order-number-that-received-the-shipment-notice/10478', target="_blank"),
+        style={'textAlign':'center'}
+    ),
     dcc.Interval(
         id='interval-component',
         interval=3600*1000, # in milliseconds
