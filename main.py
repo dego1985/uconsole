@@ -14,13 +14,17 @@ def load_csv():
     })
 
     df = df.dropna(subset=["_notice"])
-    df["_notice"] = [x[:-4] + "20"+x[-2:] for x in df["_notice"]]
-    df["Date of Notice"] = pd.to_datetime(df["_notice"], format='%m/%d/%Y')
+    # df["_notice"] = [x[:-4] + "20"+x[-2:] for x in df["_notice"]]
+    df["Date of Notice"] = pd.to_datetime(df["_notice"], format='%m/%d/%Y',errors="coerce")
+    df = df.dropna(subset=["Date of Notice"])
 
     def to_order_number(order_number_str:str):
         order_number_str = order_number_str.replace("x","0")
         order_number_str = order_number_str.replace("X","0")
-        return int(order_number_str)
+        if order_number_str.isdecimal():
+            return int(order_number_str)
+        else:
+            return pd.NA
         
     def to_order_pattern(model, inc_4G, inc_CM4, color):
         detail = model
@@ -34,6 +38,7 @@ def load_csv():
         return detail+","+color
     df["Order Detail"] = [to_order_pattern(x, y, z, w) for x, y, z, w in zip(df["model"], df["4G"]=="Yes", df["CM4"]=="Yes", df["color"])]
     df["Order Number"] = [to_order_number(x) for x in df["order_number_str"]]
+    df = df.dropna(subset=["Order Number"])
     df = df[[
         "Order Number",
         "Date of Notice",
