@@ -43,27 +43,28 @@ def load_csv():
     df = df.sort_values("Order Detail")
     return df
 
-df = load_csv()
-
 app = Dash(__name__)
 server = app.server
 
 app.layout = html.Div([
     html.H1(children='Uconsole Order Progress', style={'textAlign':'center'}),
-    dcc.Dropdown(df["Order Detail"].unique(), 'CM4/A-04(CM4),Black', id='dropdown-selection'),
+    dcc.Interval(
+        id='interval-component',
+        interval=3600*1000, # in milliseconds
+        n_intervals=0
+    ),
     dcc.Graph(id='graph-content')
 ])
 
 @callback(
     Output('graph-content', 'figure'),
-    Input('dropdown-selection', 'value')
+    Input('interval-component', 'n_intervals')
 )
 def update_graph(
-    value,
+    n,
 ):
-    dff = df[df["Order Detail"]==value]
-
-    fig = px.scatter(dff, x="Date of Notice", y="Order Number")
+    df = load_csv()
+    fig = px.scatter(df, x="Date of Notice", y="Order Number", color="Order Detail")
     fig.update_traces(
         marker=dict(
             size=12,
