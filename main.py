@@ -1,7 +1,18 @@
 from dash import Dash, html, dcc, callback, Output, Input
+import numpy as np
 import plotly.express as px
 import pandas as pd
 
+def check_if_notice_after_submit(df:pd.DataFrame):
+    valids = []
+    for s, n in zip(df["Date of Submit"], df["Date of Notice"]):
+        if not pd.isna(s):
+            valid = n > s
+        else:
+            valid = True
+        valids.append(valid)
+    return np.array(valids)
+    
 def load_csv():
     df = pd.read_csv('https://docs.google.com/spreadsheets/d/1dPY1LQAMbR60w246kQV6Iwi4UqmZKgIa4iAlP3wppXo/export?format=csv&gid=995531617')
     df = df.rename(columns={
@@ -10,13 +21,17 @@ def load_csv():
         "4G Included?": "4G",
         "CM4 Included?": "CM4",
         "What is the color?": "color",
-        "When the shipment notice was sent?":"_notice"
+        "When the shipment notice was sent?":"_notice",
+        "When you submit your order?": "_submit",
     })
 
     df = df.dropna(subset=["_notice"])
     # df["_notice"] = [x[:-4] + "20"+x[-2:] for x in df["_notice"]]
+    df["Date of Submit"] = pd.to_datetime(df["_submit"], format='%m/%d/%Y',errors="coerce")
+
     df["Date of Notice"] = pd.to_datetime(df["_notice"], format='%m/%d/%Y',errors="coerce")
     df = df.dropna(subset=["Date of Notice"])
+    
 
     def to_order_number(order_number_str:str):
         order_number_str = order_number_str.replace("x","0")
@@ -39,15 +54,26 @@ def load_csv():
     df["Order Detail"] = [to_order_pattern(x, y, z, w) for x, y, z, w in zip(df["model"], df["4G"]=="Yes", df["CM4"]=="Yes", df["color"])]
     df["Order Number"] = [to_order_number(x) for x in df["order_number_str"]]
     df = df.dropna(subset=["Order Number"])
+
+    for name, _df in df.groupby("Order Detail"):
+        _df.sort_values("Order Number")
+        
+
     df = df[[
         "Order Number",
+        "Date of Submit",
         "Date of Notice",
         "Order Detail",
     ]]
-
-    df = df.sort_values("Order Detail")
     return df
 
+df = load_csv()
+valids = check_if_notice_after_submit(df)
+if np.sum(~valids) > 0:
+    df["Order Detail"] = [x if valid else "_maybe error_" for x, valid in zip(df["Order Detail"], valids)]
+df = df.sort_values("Order Detail")
+
+print(df["Order Detail"])
 app = Dash(__name__)
 server = app.server
 
@@ -72,8 +98,8 @@ app.layout = html.Div([
 def update_graph(
     n,
 ):
-    df = load_csv()
-    fig = px.scatter(df, x="Date of Notice", y="Order Number", color="Order Detail")
+    fig = px.scatter(df, x="Date of Notice", y="Order Number", color="Order Detail",
+                     hover_name="Order Number", hover_data=["Date of Submit", "Date of Notice", "Order Detail"])
     fig.update_traces(
         marker=dict(
             size=12,
