@@ -73,7 +73,6 @@ if np.sum(~valids) > 0:
     df["Order Detail"] = [x if valid else "_maybe error_" for x, valid in zip(df["Order Detail"], valids)]
 df = df.sort_values("Order Detail")
 
-print(df["Order Detail"])
 app = Dash(__name__)
 server = app.server
 
@@ -111,4 +110,5 @@ def update_graph(
     return fig
 
 if __name__ == '__main__':
+    print("start")
     app.run(debug=True)
