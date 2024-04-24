@@ -102,7 +102,7 @@ app.layout = html.Div(
         ),
         dcc.Interval(
             id="interval-component",
-            interval=10 * 1000,  # in milliseconds
+            interval=3600 * 1000,  # in milliseconds
             n_intervals=0,
         ),
         dcc.Graph(id="graph-content"),
@@ -131,7 +131,7 @@ def update_graph(
         x="Date of Notice",
         y="Order Number",
         color="Order Detail",
-        title=f"{n} times updated(updated every 5 minutes)",
+        # title=f"{n} times updated(updated every 5 minutes)",
         hover_name="Order Number",
         hover_data=["Date of Submit", "Date of Notice", "Order Detail"],
     )
